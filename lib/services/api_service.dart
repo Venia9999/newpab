@@ -20,8 +20,7 @@ class ApiService {
         throw Exception("HTTP ${response.statusCode}");
       }
 
-      final body = response.body.trim();
-      final List data = jsonDecode(body);
+      final List data = jsonDecode(response.body);
       return data.map((e) => Movie.fromJson(e)).toList();
     } catch (e) {
       throw Exception("Gagal mengambil data film");
@@ -50,7 +49,87 @@ class ApiService {
   }
 
   // =======================
-  // LOGIN (FIX FINAL)
+  // ADD MOVIE (ADMIN)
+  // =======================
+  static Future<bool> addMovie({
+    required String title,
+    required String genre,
+    required String duration,
+    required String description,
+    required File poster,
+  }) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/movies/add_movie.php'),
+      );
+
+      request.fields['title'] = title;
+      request.fields['genre'] = genre;
+      request.fields['duration'] = duration;
+      request.fields['description'] = description;
+
+      request.files.add(
+        await http.MultipartFile.fromPath('poster', poster.path),
+      );
+
+      var response = await request.send().timeout(const Duration(seconds: 10));
+      final resStr = await response.stream.bytesToString();
+
+      if (response.statusCode != 200) return false;
+
+      final data = jsonDecode(resStr);
+      return data['success'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // =======================
+  // DELETE MOVIE (ADMIN)
+  // =======================
+  static Future<Map<String, dynamic>> deleteMovie(int movieId) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("$baseUrl/movies/delete_movie.php"),
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+            },
+            body: jsonEncode({
+              "id": movieId,
+            }),
+          )
+          .timeout(const Duration(seconds: 8));
+
+      if (response.statusCode != 200) {
+        return {
+          "success": false,
+          "message": "Server error (${response.statusCode})",
+        };
+      }
+
+      final body = response.body.trim();
+
+      if (!body.startsWith("{")) {
+        return {
+          "success": false,
+          "message": "Response server tidak valid",
+        };
+      }
+
+      return jsonDecode(body);
+    } catch (e) {
+      return {
+        "success": false,
+        "message": "Gagal menghapus film",
+      };
+    }
+  }
+
+  // =======================
+  // LOGIN
   // =======================
   static Future<Map<String, dynamic>> login(
     String email,

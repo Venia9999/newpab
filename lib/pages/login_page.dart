@@ -7,6 +7,7 @@ import '../providers/user_provider.dart';
 import '../models/user.dart';
 import 'register_page.dart';
 import 'main_page.dart';
+import '../pages/admin/admin_film_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,10 +21,11 @@ class _LoginPageState extends State<LoginPage> {
   final passCtrl = TextEditingController();
   bool loading = false;
 
-  // ================= THEME =================
+  /// 👁️ status lihat/sembunyi password
+  bool _showPassword = false;
+
   static const Color gold = Color(0xFFD4AF37);
   static const Color bg = Colors.white;
-  static const Color textPrimary = Color(0xFF1A1A1A);
   static const Color textSecondary = Color(0xFF777777);
 
   @override
@@ -33,8 +35,7 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // ================= LOGIN =================
-  void login() async {
+  Future<void> login() async {
     if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Email dan password wajib diisi")),
@@ -50,41 +51,41 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     if (!mounted) return;
-
     setState(() => loading = false);
 
     if (res['success'] == true) {
-      // 🔥 AMBIL DATA USER DARI API
       final userData = res['user'];
+
       final user = User(
+        id: userData['id'].toString(),
         name: userData['nama'] ?? 'User',
         email: userData['email'] ?? emailCtrl.text.trim(),
+        role: userData['role'] ?? 'user',
       );
 
-      // 🔥 SIMPAN USER KE PROVIDER (INI KUNCI UTAMA)
       Provider.of<UserProvider>(context, listen: false).setUser(user);
 
       showSimpleNotification(
         Text(
-          "Login berhasil! Selamat datang, ${user.name}",
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          "Login sebagai ${user.role.toUpperCase()}",
+          style: const TextStyle(color: Colors.white),
         ),
         background: gold,
         leading: const Icon(Icons.check_circle, color: Colors.white),
-        autoDismiss: true,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 2),
       );
 
-      // 🔥 MASUK KE MAIN PAGE
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => MainPage(userName: user.name),
-        ),
-      );
+      if (user.isAdmin) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminFilmPage()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => MainPage(userName: user.name)),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(res['message'] ?? 'Login gagal')),
@@ -100,11 +101,9 @@ class _LoginPageState extends State<LoginPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 30),
 
-              // ================= ICON =================
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -120,7 +119,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 20),
 
-              // ================= TITLE =================
               const Text(
                 "Selamat Datang",
                 style: TextStyle(
@@ -133,17 +131,12 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 6),
 
               const Text(
-                "Login untuk melanjutkan ke pemesanan tiket",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textSecondary,
-                ),
+                "Login untuk melanjutkan",
+                style: TextStyle(color: textSecondary),
               ),
 
               const SizedBox(height: 40),
 
-              // ================= FORM CARD =================
               Container(
                 padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
@@ -165,15 +158,27 @@ class _LoginPageState extends State<LoginPage> {
                       icon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 16),
+
+                    /// 🔐 ada toggle mata
                     _inputField(
                       controller: passCtrl,
                       label: "Password",
                       icon: Icons.lock_outline,
-                      obscure: true,
+                      obscure: !_showPassword,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _showPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: gold,
+                        ),
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
+                      ),
                     ),
+
                     const SizedBox(height: 28),
 
-                    // ================= LOGIN BUTTON =================
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -181,19 +186,13 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: loading ? null : login,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: gold,
-                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                         child: loading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: Colors.white,
-                                ),
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
                               )
                             : const Text(
                                 "Login",
@@ -211,14 +210,10 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 24),
 
-              // ================= REGISTER =================
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "Belum punya akun?",
-                    style: TextStyle(color: textSecondary),
-                  ),
+                  const Text("Belum punya akun?"),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
@@ -245,30 +240,26 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // ================= INPUT FIELD =================
   Widget _inputField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
     bool obscure = false,
+    Widget? suffixIcon,
   }) {
     return TextField(
       controller: controller,
       obscureText: obscure,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: textSecondary),
         prefixIcon: Icon(icon, color: gold),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 18),
-        enabledBorder: OutlineInputBorder(
+        suffixIcon: suffixIcon,
+        border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: gold.withOpacity(0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: gold, width: 1.5),
+          borderSide: const BorderSide(color: gold),
         ),
       ),
     );

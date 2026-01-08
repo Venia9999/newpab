@@ -3,7 +3,7 @@ class Movie {
   final String title;
   final String description;
   final String poster;
-  final String tailer; // dari kolom tailer
+  final String tailer;
   final int duration;
 
   Movie({
@@ -21,7 +21,7 @@ class Movie {
       title: json['title'],
       description: json['description'],
       poster: json['poster'],
-      tailer: json['tailer'], // ⬅️ SESUAI DATABASE
+      tailer: json['tailer'],
       duration: int.parse(json['duration'].toString()),
     );
   }

@@ -2,11 +2,62 @@ import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
 import '../models/notification_data.dart';
 
-class NotificationPage extends StatelessWidget {
+class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
 
+  @override
+  State<NotificationPage> createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
   static const Color gold = Color(0xFFD4AF37);
   static const Color bg = Color(0xFFF6F6F6);
+
+  List<NotificationData> _notifications = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    final data = await NotificationService.getNotifications();
+    setState(() {
+      _notifications = data;
+      _loading = false;
+    });
+  }
+
+  void _clearAll() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Hapus Notifikasi"),
+        content:
+            const Text("Apakah kamu yakin ingin menghapus semua notifikasi?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _notifications.clear();
+              });
+            },
+            child: const Text(
+              "Hapus",
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,30 +69,25 @@ class NotificationPage extends StatelessWidget {
         foregroundColor: gold,
         elevation: 0,
         centerTitle: true,
+        actions: [
+          if (_notifications.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _clearAll,
+            ),
+        ],
       ),
-      body: FutureBuilder<List<NotificationData>>(
-        future: NotificationService.getNotifications(),
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snap.hasData || snap.data!.isEmpty) {
-            return _emptyState();
-          }
-
-          final data = snap.data!;
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: data.length,
-            itemBuilder: (_, i) {
-              final n = data[i];
-              return _notifCard(n);
-            },
-          );
-        },
-      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _notifications.isEmpty
+              ? _emptyState()
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _notifications.length,
+                  itemBuilder: (_, i) {
+                    return _notifCard(_notifications[i]);
+                  },
+                ),
     );
   }
 

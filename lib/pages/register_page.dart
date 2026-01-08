@@ -12,12 +12,14 @@ class _RegisterPageState extends State<RegisterPage> {
   final namaCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
+
   bool loading = false;
 
-  // ================= THEME =================
+  /// 👁️ toggle password
+  bool _showPassword = false;
+
   static const Color gold = Color(0xFFD4AF37);
   static const Color bg = Colors.white;
-  static const Color textPrimary = Color(0xFF1A1A1A);
   static const Color textSecondary = Color(0xFF777777);
 
   void register() async {
@@ -56,11 +58,9 @@ class _RegisterPageState extends State<RegisterPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 30),
 
-              // ================= LOGO / ICON =================
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -76,14 +76,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
               const SizedBox(height: 20),
 
-              // ================= TITLE =================
               const Text(
                 "Buat Akun Baru",
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: gold,
-                  letterSpacing: 0.5,
                 ),
               ),
 
@@ -91,16 +89,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
               const Text(
                 "Daftar untuk mulai pesan tiket bioskop",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textSecondary,
-                ),
+                style: TextStyle(color: textSecondary),
               ),
 
               const SizedBox(height: 40),
 
-              // ================= CARD FORM =================
               Container(
                 padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
@@ -128,15 +121,27 @@ class _RegisterPageState extends State<RegisterPage> {
                       icon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 16),
+
+                    /// 🔐 ada icon mata
                     _inputField(
                       controller: passCtrl,
                       label: "Password",
                       icon: Icons.lock_outline,
-                      obscure: true,
+                      obscure: !_showPassword,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _showPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: gold,
+                        ),
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
+                      ),
                     ),
+
                     const SizedBox(height: 28),
 
-                    // ================= BUTTON =================
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -144,19 +149,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: loading ? null : register,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: gold,
-                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                         child: loading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: Colors.white,
-                                ),
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
                               )
                             : const Text(
                                 "Register",
@@ -171,29 +170,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ],
                 ),
               ),
-
-              const SizedBox(height: 24),
-
-              // ================= LOGIN LINK =================
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Sudah punya akun?",
-                    style: TextStyle(color: textSecondary),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      "Login",
-                      style: TextStyle(
-                        color: gold,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
         ),
@@ -201,30 +177,26 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // ================= INPUT FIELD =================
   Widget _inputField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
     bool obscure = false,
+    Widget? suffixIcon,
   }) {
     return TextField(
       controller: controller,
       obscureText: obscure,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: textSecondary),
         prefixIcon: Icon(icon, color: gold),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 18),
-        enabledBorder: OutlineInputBorder(
+        suffixIcon: suffixIcon,
+        border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: gold.withOpacity(0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: gold, width: 1.5),
+          borderSide: const BorderSide(color: gold),
         ),
       ),
     );

@@ -335,6 +335,8 @@ class _HomeContentState extends State<_HomeContent> {
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
+                       
+                       
                                 ),
                               ),
                             ),

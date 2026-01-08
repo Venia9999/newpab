@@ -3,6 +3,8 @@ import 'home_page.dart';
 import 'film_page.dart';
 import 'history_list_page.dart';
 import 'profile_page.dart';
+import 'settings_page.dart';
+
 
 class MainPage extends StatefulWidget {
   final String userName;
